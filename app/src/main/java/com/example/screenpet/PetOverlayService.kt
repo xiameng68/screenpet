@@ -173,13 +173,14 @@ class PetOverlayService : Service() {
         }
 
         scope.launch {
-            val reply = DeepSeekClient.chat(
-                ScreenReaderService.latestScreenText,
-                ForegroundAppTracker.sceneDescription()
-            )
-            js("window.petSay(${JSONObject.quote(reply)})")
-            js("window.petThink(false)")
-            thinking = false
+    val reply = DeepSeekClient.chat(
+        this@PetOverlayService,
+        ScreenReaderService.latestScreenText,
+        ForegroundAppTracker.sceneDescription()
+    )
+    js("window.petSay(${JSONObject.quote(reply)})")
+    js("window.petThink(false)")
+    thinking = false
         }
     }
 
