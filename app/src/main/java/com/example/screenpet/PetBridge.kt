@@ -4,7 +4,7 @@ import android.webkit.JavascriptInterface
 
 class PetBridge(
     private val onPetClick: () -> Unit,
-    private val onDrag: (Float, Float) -> Unit,
+    private val onDragTo: (Float, Float) -> Unit,
     private val onDragEnd: () -> Unit
 ) {
     @JavascriptInterface
@@ -13,8 +13,8 @@ class PetBridge(
     }
 
     @JavascriptInterface
-    fun onDrag(dx: Float, dy: Float): Unit {
-        onDrag.invoke(dx, dy)
+    fun onDragTo(x: Float, y: Float): Unit {
+        onDragTo.invoke(x, y)
     }
 
     @JavascriptInterface
