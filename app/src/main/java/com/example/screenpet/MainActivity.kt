@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Base64
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -36,6 +37,16 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
 
+        findViewById<Button>(R.id.btnPickImage).setOnClickListener {
+            val intent = Intent(Intent.ACTION_PICK)
+            intent.type = "image/*"
+            startActivityForResult(intent, 1001)
+        }
+
+        findViewById<Button>(R.id.btnResetImage).setOnClickListener {
+            PetOverlayService.instance?.setPetImage(null)
+        }
+
         findViewById<Button>(R.id.btnStart).setOnClickListener {
             if (!Settings.canDrawOverlays(this)) {
                 tvStatus.text = "请先开启悬浮窗权限"
@@ -45,6 +56,21 @@ class MainActivity : AppCompatActivity() {
                 this, Intent(this, PetOverlayService::class.java)
             )
             tvStatus.text = "桌宠已召唤 · 返回桌面看看"
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 1001 && resultCode == RESULT_OK && data != null) {
+            val uri = data.data ?: return
+            try {
+                val inputStream = contentResolver.openInputStream(uri) ?: return
+                val bytes = inputStream.readBytes()
+                inputStream.close()
+                val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+                val dataUrl = "data:image/png;base64,$base64"
+                PetOverlayService.instance?.setPetImage(dataUrl)
+            } catch (_: Exception) {}
         }
     }
 
