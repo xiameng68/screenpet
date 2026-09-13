@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
@@ -38,6 +39,9 @@ class PetOverlayService : Service() {
     private var dragStartY = 0f
     private var winStartX = 0
     private var winStartY = 0
+
+    // 记录上一次查记忆前的屏幕文字（用来对比出 Operit 的新回复）
+    private var lastScreenText: String = ""
 
     companion object {
         const val ACTION_OPERIT_REPLY = "com.example.screenpet.OPERIT_REPLY"
@@ -179,36 +183,69 @@ class PetOverlayService : Service() {
         try { wm.updateViewLayout(webView, params) } catch (_: Exception) {}
     }
 
+    // ============ 核心：点击桌宠 ============
     private fun onPetTapped() {
         if (thinking) return
         thinking = true
         js("window.petThink(true)")
 
+        // 1) 记录当前屏幕文字，用来对比
+        lastScreenText = ScreenReaderService.latestScreenText
+
+        // 2) 给 Operit 发暗号：查记忆
         scope.launch(Dispatchers.IO) {
             try {
-                val url = java.net.URL("http://127.0.0.1:8094/chat")
-                val conn = url.openConnection() as java.net.HttpURLConnection
-                conn.requestMethod = "POST"
-                conn.setRequestProperty("Content-Type", "application/json")
-                conn.setRequestProperty("Authorization", "Bearer 6a7921e915264ea1bbfc3bad67ef871a")
-                conn.doOutput = true
-                val body = "{\"message\": \"用户戳了桌宠一下\"}"
-                conn.outputStream.use { it.write(body.toByteArray()) }
-                conn.responseCode
-                conn.disconnect()
+                sendOperitCommand("陆知肠，读历史：20")
             } catch (_: Exception) {}
         }
 
+        // 3) 等 3 秒，让 Operit 有时间处理并显示回复
         scope.launch {
-            val reply = DeepSeekClient.chat(
-                this@PetOverlayService,
-                ScreenReaderService.latestScreenText,
-                ForegroundAppTracker.sceneDescription()
-            )
+            delay(3000)
+            val newText = ScreenReaderService.latestScreenText
+            val extracted = extractOperitReply(lastScreenText, newText)
+
+            val reply = if (extracted.isNullOrBlank()) {
+                DeepSeekClient.chat(
+                    this@PetOverlayService,
+                    newText,
+                    ForegroundAppTracker.sceneDescription()
+                )
+            } else {
+                extracted
+            }
+
             js("window.petSay(${JSONObject.quote(reply)})")
             js("window.petThink(false)")
             thinking = false
         }
+    }
+
+    // 给 Operit 的 HTTP 接口发一条消息
+    private fun sendOperitCommand(message: String) {
+        try {
+            val url = java.net.URL("http://127.0.0.1:8094/chat")
+            val conn = url.openConnection() as java.net.HttpURLConnection
+            conn.requestMethod = "POST"
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.setRequestProperty("Authorization", "Bearer 6a7921e915264ea1bbfc3bad67ef871a")
+            conn.doOutput = true
+            val body = "{\"message\": ${JSONObject.quote(message)}}"
+            conn.outputStream.use { it.write(body.toByteArray()) }
+            conn.responseCode
+            conn.disconnect()
+        } catch (_: Exception) {}
+    }
+
+    // 从屏幕文字里，找到 Operit 新回复的那一段
+    private fun extractOperitReply(old: String, new: String): String? {
+        if (new.isBlank()) return null
+        // 简单策略：找出 new 里比 old 多出来的尾巴
+        if (old.isBlank()) return new.takeLast(300)
+        val idx = new.indexOf(old.takeLast(80))
+        if (idx < 0) return new.takeLast(300)
+        val diff = new.substring(idx + old.takeLast(80).length).trim()
+        return diff.ifBlank { null }
     }
 
     private fun js(code: String) {
