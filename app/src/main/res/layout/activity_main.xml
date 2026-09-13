@@ -169,6 +169,29 @@
             android:inputType="text"
             android:maxLines="1"/>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="桌宠性格"
+            android:textColor="#7DD3FC"
+            android:textSize="14sp"
+            android:textStyle="bold"/>
+
+        <EditText
+            android:id="@+id/etPersonality"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="#1A2233"
+            android:padding="12dp"
+            android:minLines="3"
+            android:gravity="top|start"
+            android:hint="例如：你是一只高冷、说话很短的猫，偶尔嘲讽我"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:inputType="textMultiLine"/>
+
         <Button
             android:id="@+id/btnSaveAI"
             android:layout_width="match_parent"
