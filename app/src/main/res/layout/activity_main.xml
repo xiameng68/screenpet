@@ -1,89 +1,194 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="32dp"
-    android:background="#0B0F1A">
+    android:background="#0B0F1A"
+    android:fillViewport="true">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="🐱 ScreenPet"
-        android:textColor="#FFD9A0"
-        android:textSize="30sp"
-        android:textStyle="bold"/>
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="24dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="你的 AI 桌面宠物"
-        android:textColor="#8899AA"
-        android:textSize="14sp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🐱 ScreenPet"
+            android:textColor="#FFD9A0"
+            android:textSize="30sp"
+            android:textStyle="bold"/>
 
-    <Button
-        android:id="@+id/btnOverlay"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginTop="40dp"
-        android:text="① 开启悬浮窗权限"
-        android:textColor="#0B0F1A"
-        android:backgroundTint="#FFD9A0"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="你的 AI 桌面宠物"
+            android:textColor="#8899AA"
+            android:textSize="14sp"/>
 
-    <Button
-        android:id="@+id/btnAccess"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginTop="12dp"
-        android:text="② 开启无障碍读屏"
-        android:textColor="#0B0F1A"
-        android:backgroundTint="#FFD9A0"/>
+        <Button
+            android:id="@+id/btnOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="24dp"
+            android:text="① 开启悬浮窗权限"
+            android:textColor="#0B0F1A"
+            android:backgroundTint="#FFD9A0"/>
 
-    <Button
-        android:id="@+id/btnUsage"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginTop="12dp"
-        android:text="③ 开启使用情况访问"
-        android:textColor="#0B0F1A"
-        android:backgroundTint="#FFD9A0"/>
+        <Button
+            android:id="@+id/btnAccess"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:text="② 开启无障碍读屏"
+            android:textColor="#0B0F1A"
+            android:backgroundTint="#FFD9A0"/>
 
-    <Button
-        android:id="@+id/btnPickImage"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginTop="12dp"
-        android:text="🖼 上传自定义形象"
-        android:textColor="#0B0F1A"
-        android:backgroundTint="#A78BFA"/>
+        <Button
+            android:id="@+id/btnUsage"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:text="③ 开启使用情况访问"
+            android:textColor="#0B0F1A"
+            android:backgroundTint="#FFD9A0"/>
 
-    <Button
-        android:id="@+id/btnResetImage"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginTop="8dp"
-        android:text="↺ 恢复默认小猫"
-        android:textColor="#0B0F1A"
-        android:backgroundTint="#A78BFA"/>
+        <Button
+            android:id="@+id/btnStart"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="18dp"
+            android:text="④ 召唤桌宠"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#5A78DC"/>
 
-    <Button
-        android:id="@+id/btnStart"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginTop="20dp"
-        android:text="④ 召唤桌宠"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#5A78DC"/>
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text=""
+            android:textColor="#8899AA"
+            android:textSize="12sp"
+            android:gravity="center"/>
 
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text=""
-        android:textColor="#8899AA"
-        android:textSize="12sp"
-        android:gravity="center"/>
-</LinearLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="24dp"
+            android:background="#223047"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="🖼 自定义形象"
+            android:textColor="#A78BFA"
+            android:textSize="16sp"
+            android:textStyle="bold"/>
+
+        <Button
+            android:id="@+id/btnPickImage"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:text="上传自定义形象"
+            android:textColor="#0B0F1A"
+            android:backgroundTint="#A78BFA"/>
+
+        <Button
+            android:id="@+id/btnResetImage"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
+            android:text="恢复默认小猫"
+            android:textColor="#0B0F1A"
+            android:backgroundTint="#A78BFA"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="24dp"
+            android:background="#223047"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="🤖 AI 接口设置"
+            android:textColor="#7DD3FC"
+            android:textSize="16sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="填任意 OpenAI 兼容接口，DeepSeek / Gemini / GPT 都行"
+            android:textColor="#66738C"
+            android:textSize="12sp"/>
+
+        <EditText
+            android:id="@+id/etApiUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="#1A2233"
+            android:padding="12dp"
+            android:hint="接口地址，例如 https://api.deepseek.com/chat/completions"
+            android:hintTextColor="#556"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:inputType="textUri"
+            android:maxLines="1"/>
+
+        <EditText
+            android:id="@+id/etApiKey"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="#1A2233"
+            android:padding="12dp"
+            android:hint="API Key"
+            android:hintTextColor="#556"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:inputType="textPassword"
+            android:maxLines="1"/>
+
+        <EditText
+            android:id="@+id/etModel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="#1A2233"
+            android:padding="12dp"
+            android:hint="模型名，例如 deepseek-chat / gemini-1.5-flash / gpt-4o"
+            android:hintTextColor="#556"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:inputType="text"
+            android:maxLines="1"/>
+
+        <Button
+            android:id="@+id/btnSaveAI"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="14dp"
+            android:text="保存 AI 设置"
+            android:textColor="#0B0F1A"
+            android:backgroundTint="#7DD3FC"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="40dp"
+            android:text="设置保存在手机本地，不会上传"
+            android:textColor="#66738C"
+            android:textSize="11sp"/>
+
+    </LinearLayout>
+</ScrollView>
