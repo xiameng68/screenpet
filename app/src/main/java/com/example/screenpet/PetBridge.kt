@@ -4,21 +4,19 @@ import android.webkit.JavascriptInterface
 
 class PetBridge(
     private val onPetClick: () -> Unit,
-    private val onDragTo: (Float, Float) -> Unit,
+    private val onDragStart: (Float, Float) -> Unit,
+    private val onDragMove: (Float, Float) -> Unit,
     private val onDragEnd: () -> Unit
 ) {
     @JavascriptInterface
-    fun onPetClick(): Unit {
-        onPetClick.invoke()
-    }
+    fun onPetClick(): Unit { onPetClick.invoke() }
 
     @JavascriptInterface
-    fun onDragTo(x: Float, y: Float): Unit {
-        onDragTo.invoke(x, y)
-    }
+    fun onDragStart(x: Float, y: Float): Unit { onDragStart.invoke(x, y) }
 
     @JavascriptInterface
-    fun onDragEnd(): Unit {
-        onDragEnd.invoke()
-    }
+    fun onDragMove(x: Float, y: Float): Unit { onDragMove.invoke(x, y) }
+
+    @JavascriptInterface
+    fun onDragEnd(): Unit { onDragEnd.invoke() }
 }
