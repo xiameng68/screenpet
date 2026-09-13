@@ -6,7 +6,8 @@ class PetBridge(
     private val onPetClick: () -> Unit,
     private val onDragStart: (Float, Float) -> Unit,
     private val onDragMove: (Float, Float) -> Unit,
-    private val onDragEnd: () -> Unit
+    private val onDragEnd: () -> Unit,
+    private val onScaleChanged: (Float) -> Unit
 ) {
     @JavascriptInterface
     fun onPetClick(): Unit { onPetClick.invoke() }
@@ -19,4 +20,7 @@ class PetBridge(
 
     @JavascriptInterface
     fun onDragEnd(): Unit { onDragEnd.invoke() }
+
+    @JavascriptInterface
+    fun onScaleChanged(scale: Float): Unit { onScaleChanged.invoke(scale) }
 }
