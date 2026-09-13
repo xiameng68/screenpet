@@ -51,10 +51,28 @@
         android:backgroundTint="#FFD9A0"/>
 
     <Button
+        android:id="@+id/btnPickImage"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="12dp"
+        android:text="🖼 上传自定义形象"
+        android:textColor="#0B0F1A"
+        android:backgroundTint="#A78BFA"/>
+
+    <Button
+        android:id="@+id/btnResetImage"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="8dp"
+        android:text="↺ 恢复默认小猫"
+        android:textColor="#0B0F1A"
+        android:backgroundTint="#A78BFA"/>
+
+    <Button
         android:id="@+id/btnStart"
         android:layout_width="match_parent"
         android:layout_height="52dp"
-        android:layout_marginTop="28dp"
+        android:layout_marginTop="20dp"
         android:text="④ 召唤桌宠"
         android:textColor="#FFFFFF"
         android:backgroundTint="#5A78DC"/>
