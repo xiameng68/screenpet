@@ -20,6 +20,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etApiUrl: EditText
     private lateinit var etApiKey: EditText
     private lateinit var etModel: EditText
+    private lateinit var etPersonality: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,11 +30,13 @@ class MainActivity : AppCompatActivity() {
         etApiUrl = findViewById(R.id.etApiUrl)
         etApiKey = findViewById(R.id.etApiKey)
         etModel = findViewById(R.id.etModel)
+        etPersonality = findViewById(R.id.etPersonality)
 
         val prefs = getSharedPreferences("pet", MODE_PRIVATE)
         etApiUrl.setText(prefs.getString("apiUrl", "https://api.deepseek.com/chat/completions"))
         etApiKey.setText(prefs.getString("apiKey", ""))
         etModel.setText(prefs.getString("model", "deepseek-chat"))
+        etPersonality.setText(prefs.getString("personality", ""))
 
         findViewById<Button>(R.id.btnOverlay).setOnClickListener {
             startActivity(Intent(
@@ -79,14 +82,17 @@ class MainActivity : AppCompatActivity() {
             val url = etApiUrl.text.toString().trim()
             val key = etApiKey.text.toString().trim()
             val model = etModel.text.toString().trim()
+            val personality = etPersonality.text.toString().trim()
+
             if (url.isEmpty() || key.isEmpty() || model.isEmpty()) {
-                Toast.makeText(this, "三项都要填哦", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "接口、Key、模型 三项都要填哦", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             prefs.edit()
                 .putString("apiUrl", url)
                 .putString("apiKey", key)
                 .putString("model", model)
+                .putString("personality", personality)
                 .apply()
             Toast.makeText(this, "已保存，点桌宠就生效", Toast.LENGTH_SHORT).show()
         }
