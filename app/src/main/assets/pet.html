@@ -107,9 +107,9 @@
       return;
     }
     if(!dragging)return;
-    const t=e.touches[0]; const dx=t.clientX-lastX,dy=t.clientY-lastY; lastX=t.clientX; lastY=t.clientY;
-    if(Math.hypot(t.clientX-startX,t.clientY-startY)>8)moved=true;
-    if(moved && window.AndroidBridge) AndroidBridge.onDrag(dx,dy);
+const t=e.touches[0];
+if(Math.hypot(t.clientX-startX,t.clientY-startY)>8)moved=true;
+if(moved && window.AndroidBridge) AndroidBridge.onDragTo(t.clientX, t.clientY);
   },{passive:true});
 
   pet.addEventListener('touchend',()=>{
