@@ -18,7 +18,7 @@ object DeepSeekClient {
         .readTimeout(40, TimeUnit.SECONDS)
         .build()
 
-    private const val DEFAULT_PERSONALITY = """
+    private val DEFAULT_PERSONALITY = """
 你是一只住在手机屏幕上的桌宠，性格活泼、有点黏人、偶尔吐槽。
 用户会给你看他当前的屏幕内容，你要像朋友一样回应他。
 规则：
