@@ -34,6 +34,11 @@ class PetOverlayService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private var thinking = false
 
+    private var dragStartX = 0f
+    private var dragStartY = 0f
+    private var winStartX = 0
+    private var winStartY = 0
+
     companion object {
         const val ACTION_OPERIT_REPLY = "com.example.screenpet.OPERIT_REPLY"
         const val EXTRA_MESSAGE = "message"
@@ -114,9 +119,21 @@ class PetOverlayService : Service() {
             addJavascriptInterface(
                 PetBridge(
                     onPetClick = { onPetTapped() },
-                    onDragStart = { _, _ -> },
-                    onDragMove = { x, y -> movePetTo(x, y) },
-                    onDragEnd = { }
+                    onDragStart = { x, y ->
+                        dragStartX = x
+                        dragStartY = y
+                        winStartX = params.x
+                        winStartY = params.y
+                    },
+                    onDragMove = { x, y ->
+                        val dx = x - dragStartX
+                        val dy = y - dragStartY
+                        params.x = winStartX + dx.toInt()
+                        params.y = winStartY + dy.toInt()
+                        try { wm.updateViewLayout(webView, params) } catch (_: Exception) {}
+                    },
+                    onDragEnd = { },
+                    onScaleChanged = { s -> resizeWindow(s) }
                 ),
                 "AndroidBridge"
             )
@@ -125,31 +142,33 @@ class PetOverlayService : Service() {
     }
 
     private fun setupWindow() {
-        // 铺满全屏，不再裁剪桌宠
+        // 关键：窗口尺寸不再铺满全屏，只覆盖猫本身
+        val size = dp(180)
         params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
+            size, size,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             else
                 @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                     or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                    or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                     or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = 0
-            y = 0
+            x = 60
+            y = 600
         }
         wm.addView(webView, params)
     }
 
-    // 拖动：把 JS 发来的手指坐标透传给 JS，由 JS 决定猫的位置
-    // 因为窗口铺满全屏，坐标 1:1 对应
-    private fun movePetTo(x: Float, y: Float) {
-        js("window.__nativeDragTo(${x},${y})")
+    // 缩放时，窗口跟着变大小
+    fun resizeWindow(scale: Float) {
+        val base = dp(180)
+        val newSize = (base * scale).toInt().coerceIn(dp(80), dp(600))
+        params.width = newSize
+        params.height = newSize
+        try { wm.updateViewLayout(webView, params) } catch (_: Exception) {}
     }
 
     private fun onPetTapped() {
@@ -173,14 +192,14 @@ class PetOverlayService : Service() {
         }
 
         scope.launch {
-    val reply = DeepSeekClient.chat(
-        this@PetOverlayService,
-        ScreenReaderService.latestScreenText,
-        ForegroundAppTracker.sceneDescription()
-    )
-    js("window.petSay(${JSONObject.quote(reply)})")
-    js("window.petThink(false)")
-    thinking = false
+            val reply = DeepSeekClient.chat(
+                this@PetOverlayService,
+                ScreenReaderService.latestScreenText,
+                ForegroundAppTracker.sceneDescription()
+            )
+            js("window.petSay(${JSONObject.quote(reply)})")
+            js("window.petThink(false)")
+            thinking = false
         }
     }
 
@@ -189,6 +208,8 @@ class PetOverlayService : Service() {
             try { webView.evaluateJavascript(code, null) } catch (_: Exception) {}
         }
     }
+
+    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
     override fun onDestroy() {
         instance = null
