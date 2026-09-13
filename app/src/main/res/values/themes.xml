@@ -1,0 +1,6 @@
+<resources>
+    <style name="Theme.ScreenPet" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowBackground">#0B0F1A</item>
+        <item name="android:statusBarColor">#0B0F1A</item>
+    </style>
+</resources>

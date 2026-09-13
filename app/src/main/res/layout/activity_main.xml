@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="32dp"
+    android:background="#0B0F1A">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🐱 ScreenPet"
+        android:textColor="#FFD9A0"
+        android:textSize="30sp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="你的 AI 桌面宠物"
+        android:textColor="#8899AA"
+        android:textSize="14sp"/>
+
+    <Button
+        android:id="@+id/btnOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="40dp"
+        android:text="① 开启悬浮窗权限"
+        android:textColor="#0B0F1A"
+        android:backgroundTint="#FFD9A0"/>
+
+    <Button
+        android:id="@+id/btnAccess"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="12dp"
+        android:text="② 开启无障碍读屏"
+        android:textColor="#0B0F1A"
+        android:backgroundTint="#FFD9A0"/>
+
+    <Button
+        android:id="@+id/btnUsage"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="12dp"
+        android:text="③ 开启使用情况访问"
+        android:textColor="#0B0F1A"
+        android:backgroundTint="#FFD9A0"/>
+
+    <Button
+        android:id="@+id/btnStart"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="28dp"
+        android:text="④ 召唤桌宠"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#5A78DC"/>
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text=""
+        android:textColor="#8899AA"
+        android:textSize="12sp"
+        android:gravity="center"/>
+</LinearLayout>

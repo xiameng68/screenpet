@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">ScreenPet</string>
+    <string name="accessibility_desc">ScreenPet 需要读取屏幕内容，才能知道您在聊什么、看什么，从而做出回应。数据仅用于本地 AI 对话，不会上传聊天记录原文。</string>
+</resources>
