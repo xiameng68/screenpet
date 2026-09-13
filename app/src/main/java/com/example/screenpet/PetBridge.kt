@@ -8,11 +8,17 @@ class PetBridge(
     private val onDragEnd: () -> Unit
 ) {
     @JavascriptInterface
-    fun onPetClick() = onPetClick()
+    fun onPetClick(): Unit {
+        onPetClick.invoke()
+    }
 
     @JavascriptInterface
-    fun onDrag(dx: Float, dy: Float) = onDrag(dx, dy)
+    fun onDrag(dx: Float, dy: Float): Unit {
+        onDrag.invoke(dx, dy)
+    }
 
     @JavascriptInterface
-    fun onDragEnd() = onDragEnd()
+    fun onDragEnd(): Unit {
+        onDragEnd.invoke()
+    }
 }
