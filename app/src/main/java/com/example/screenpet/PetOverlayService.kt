@@ -37,6 +37,7 @@ class PetOverlayService : Service() {
     companion object {
         const val ACTION_OPERIT_REPLY = "com.example.screenpet.OPERIT_REPLY"
         const val EXTRA_MESSAGE = "message"
+        @Volatile var instance: PetOverlayService? = null
     }
 
     private val operitReplyReceiver = object : BroadcastReceiver() {
@@ -55,6 +56,7 @@ class PetOverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         startForegroundSafely()
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
         setupWebView()
@@ -67,6 +69,18 @@ class PetOverlayService : Service() {
         } else {
             registerReceiver(operitReplyReceiver, filter)
         }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.getBooleanExtra("resetImage", false) == true) {
+            js("window.setPetImage(null)")
+        }
+        return START_STICKY
+    }
+
+    fun setPetImage(dataUrl: String?) {
+        if (dataUrl == null) js("window.setPetImage(null)")
+        else js("window.setPetImage(${JSONObject.quote(dataUrl)})")
     }
 
     private fun startForegroundSafely() {
@@ -100,8 +114,9 @@ class PetOverlayService : Service() {
             addJavascriptInterface(
                 PetBridge(
                     onPetClick = { onPetTapped() },
-                    onDragTo = { x, y -> moveWindowTo(x, y) },
-                    onDragEnd = { /* 松手后保持原位，不再吸附 */ }
+                    onDragStart = { _, _ -> },
+                    onDragMove = { x, y -> movePetTo(x, y) },
+                    onDragEnd = { }
                 ),
                 "AndroidBridge"
             )
@@ -110,9 +125,10 @@ class PetOverlayService : Service() {
     }
 
     private fun setupWindow() {
-        val size = dp(150)
+        // 铺满全屏，不再裁剪桌宠
         params = WindowManager.LayoutParams(
-            size, size,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             else
@@ -124,19 +140,16 @@ class PetOverlayService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = 60
-            y = 600
+            x = 0
+            y = 0
         }
         wm.addView(webView, params)
     }
 
-    private fun moveWindowTo(screenX: Float, screenY: Float) {
-        val halfSize = dp(75)
-        params.x = (screenX - halfSize).toInt()
-        params.y = (screenY - halfSize).toInt()
-        params.x = params.x.coerceIn(0, screenWidth() - dp(150))
-        params.y = params.y.coerceIn(0, screenHeight() - dp(150))
-        try { wm.updateViewLayout(webView, params) } catch (_: Exception) {}
+    // 拖动：把 JS 发来的手指坐标透传给 JS，由 JS 决定猫的位置
+    // 因为窗口铺满全屏，坐标 1:1 对应
+    private fun movePetTo(x: Float, y: Float) {
+        js("window.__nativeDragTo(${x},${y})")
     }
 
     private fun onPetTapped() {
@@ -176,11 +189,8 @@ class PetOverlayService : Service() {
         }
     }
 
-    private fun screenWidth() = resources.displayMetrics.widthPixels
-    private fun screenHeight() = resources.displayMetrics.heightPixels
-    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
-
     override fun onDestroy() {
+        instance = null
         handler.removeCallbacks(pollRunnable)
         scope.cancel()
         try { unregisterReceiver(operitReplyReceiver) } catch (_: Exception) {}
