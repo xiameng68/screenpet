@@ -7,20 +7,34 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Base64
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var tvStatus: TextView
+    private lateinit var etApiUrl: EditText
+    private lateinit var etApiKey: EditText
+    private lateinit var etModel: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         tvStatus = findViewById(R.id.tvStatus)
+        etApiUrl = findViewById(R.id.etApiUrl)
+        etApiKey = findViewById(R.id.etApiKey)
+        etModel = findViewById(R.id.etModel)
+
+        // 读取已保存的设置
+        val prefs = getSharedPreferences("pet", MODE_PRIVATE)
+        etApiUrl.setText(prefs.getString("apiUrl", "https://api.deepseek.com/chat/completions"))
+        etApiKey.setText(prefs.getString("apiKey", ""))
+        etModel.setText(prefs.getString("model", "deepseek-chat"))
 
         findViewById<Button>(R.id.btnOverlay).setOnClickListener {
             startActivity(Intent(
@@ -37,16 +51,6 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
 
-        findViewById<Button>(R.id.btnPickImage).setOnClickListener {
-            val intent = Intent(Intent.ACTION_PICK)
-            intent.type = "image/*"
-            startActivityForResult(intent, 1001)
-        }
-
-        findViewById<Button>(R.id.btnResetImage).setOnClickListener {
-            PetOverlayService.instance?.setPetImage(null)
-        }
-
         findViewById<Button>(R.id.btnStart).setOnClickListener {
             if (!Settings.canDrawOverlays(this)) {
                 tvStatus.text = "请先开启悬浮窗权限"
@@ -57,6 +61,43 @@ class MainActivity : AppCompatActivity() {
             )
             tvStatus.text = "桌宠已召唤 · 返回桌面看看"
         }
+
+        // 上传自定义形象
+        findViewById<Button>(R.id.btnPickImage).setOnClickListener {
+            val intent = Intent(Intent.ACTION_PICK)
+            intent.type = "image/*"
+            startActivityForResult(intent, 1001)
+        }
+
+        // 恢复默认小猫
+        findViewById<Button>(R.id.btnResetImage).setOnClickListener {
+            PetOverlayService.instance?.setPetImage(null)
+            val prefs2 = getSharedPreferences("pet", MODE_PRIVATE)
+            prefs2.edit().remove("customImg").apply()
+            Toast.makeText(this, "已恢复默认小猫", Toast.LENGTH_SHORT).show()
+        }
+
+        // 保存 AI 设置
+        findViewById<Button>(R.id.btnSaveAI).setOnClickListener {
+            val url = etApiUrl.text.toString().trim()
+            val key = etApiKey.text.toString().trim()
+            val model = etModel.text.toString().trim()
+            if (url.isEmpty() || key.isEmpty() || model.isEmpty()) {
+                Toast.makeText(this, "三项都要填哦", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            prefs.edit()
+                .putString("apiUrl", url)
+                .putString("apiKey", key)
+                .putString("model", model)
+                .apply()
+            Toast.makeText(this, "已保存，点桌宠就生效", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshStatus()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -67,16 +108,27 @@ class MainActivity : AppCompatActivity() {
                 val inputStream = contentResolver.openInputStream(uri) ?: return
                 val bytes = inputStream.readBytes()
                 inputStream.close()
-                val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
-                val dataUrl = "data:image/png;base64,$base64"
-                PetOverlayService.instance?.setPetImage(dataUrl)
-            } catch (_: Exception) {}
-        }
-    }
 
-    override fun onResume() {
-        super.onResume()
-        refreshStatus()
+                // 太大的图会卡，限制 1.5MB
+                if (bytes.size > 1_500_000) {
+                    Toast.makeText(this, "图片太大啦，选一张小一点的", Toast.LENGTH_LONG).show()
+                    return
+                }
+
+                val base64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                val mime = contentResolver.getType(uri) ?: "image/jpeg"
+                val dataUrl = "data:$mime;base64,$base64"
+
+                // 存到本地，下次启动自动加载
+                getSharedPreferences("pet", MODE_PRIVATE).edit()
+                    .putString("customImg", dataUrl).apply()
+
+                PetOverlayService.instance?.setPetImage(dataUrl)
+                Toast.makeText(this, "已换上你的图", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, "读取图片失败", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun refreshStatus() {
