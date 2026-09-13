@@ -103,7 +103,7 @@ class PetOverlayService : Service() {
             addJavascriptInterface(
                 PetBridge(
                     onPetClick = { onPetTapped() },
-                    onDrag = { dx, dy -> moveWindow(dx, dy) },
+                    onDragTo = { x, y -> moveWindowTo(x, y) },
                     onDragEnd = { snapToEdge() }
                 ),
                 "AndroidBridge"
@@ -132,13 +132,18 @@ class PetOverlayService : Service() {
         wm.addView(webView, params)
     }
 
-    private fun moveWindow(dx: Float, dy: Float) {
-        params.x += dx.toInt()
-        params.y += dy.toInt()
-        params.x = params.x.coerceIn(-40, screenWidth() - dp(110))
-        params.y = params.y.coerceIn(0, screenHeight() - dp(150))
-        try { wm.updateViewLayout(webView, params) } catch (_: Exception) {}
-    }
+    private fun moveWindowTo(screenX: Float, screenY: Float) {
+    // 手指位置就是桌宠中心，减去一半宽度
+    val halfSize = dp(75)
+    params.x = (screenX - halfSize).toInt()
+    params.y = (screenY - halfSize).toInt()
+
+    // 限制不要跑出屏幕
+    params.x = params.x.coerceIn(0, screenWidth() - dp(150))
+    params.y = params.y.coerceIn(0, screenHeight() - dp(150))
+
+    try { wm.updateViewLayout(webView, params) } catch (_: Exception) {}
+}
 
     private fun snapToEdge() {
         val target = if (params.x + dp(75) < screenWidth() / 2) -20 else screenWidth() - dp(130)
