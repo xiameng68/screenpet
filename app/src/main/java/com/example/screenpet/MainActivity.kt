@@ -30,7 +30,6 @@ class MainActivity : AppCompatActivity() {
         etApiKey = findViewById(R.id.etApiKey)
         etModel = findViewById(R.id.etModel)
 
-        // 读取已保存的设置
         val prefs = getSharedPreferences("pet", MODE_PRIVATE)
         etApiUrl.setText(prefs.getString("apiUrl", "https://api.deepseek.com/chat/completions"))
         etApiKey.setText(prefs.getString("apiKey", ""))
@@ -42,11 +41,9 @@ class MainActivity : AppCompatActivity() {
                 Uri.parse("package:$packageName")
             ))
         }
-
         findViewById<Button>(R.id.btnAccess).setOnClickListener {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
-
         findViewById<Button>(R.id.btnUsage).setOnClickListener {
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
@@ -60,24 +57,24 @@ class MainActivity : AppCompatActivity() {
                 this, Intent(this, PetOverlayService::class.java)
             )
             tvStatus.text = "桌宠已召唤 · 返回桌面看看"
+            val saved = prefs.getString("customImg", null)
+            if (saved != null) {
+                PetOverlayService.instance?.setPetImage(saved)
+            }
         }
 
-        // 上传自定义形象
         findViewById<Button>(R.id.btnPickImage).setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK)
             intent.type = "image/*"
             startActivityForResult(intent, 1001)
         }
 
-        // 恢复默认小猫
         findViewById<Button>(R.id.btnResetImage).setOnClickListener {
             PetOverlayService.instance?.setPetImage(null)
-            val prefs2 = getSharedPreferences("pet", MODE_PRIVATE)
-            prefs2.edit().remove("customImg").apply()
+            prefs.edit().remove("customImg").apply()
             Toast.makeText(this, "已恢复默认小猫", Toast.LENGTH_SHORT).show()
         }
 
-        // 保存 AI 设置
         findViewById<Button>(R.id.btnSaveAI).setOnClickListener {
             val url = etApiUrl.text.toString().trim()
             val key = etApiKey.text.toString().trim()
@@ -109,9 +106,8 @@ class MainActivity : AppCompatActivity() {
                 val bytes = inputStream.readBytes()
                 inputStream.close()
 
-                // 太大的图会卡，限制 1.5MB
                 if (bytes.size > 1_500_000) {
-                    Toast.makeText(this, "图片太大啦，选一张小一点的", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "图片太大，选一张小一点的", Toast.LENGTH_LONG).show()
                     return
                 }
 
@@ -119,7 +115,6 @@ class MainActivity : AppCompatActivity() {
                 val mime = contentResolver.getType(uri) ?: "image/jpeg"
                 val dataUrl = "data:$mime;base64,$base64"
 
-                // 存到本地，下次启动自动加载
                 getSharedPreferences("pet", MODE_PRIVATE).edit()
                     .putString("customImg", dataUrl).apply()
 
