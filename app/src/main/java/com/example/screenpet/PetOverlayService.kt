@@ -34,14 +34,11 @@ class PetOverlayService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private var thinking = false
 
-    // ====== Operit 通信暗号 ======
     companion object {
-        const val ACTION_PET_TAPPED = "com.ai.assistance.operit.EXTERNAL_CHAT"
         const val ACTION_OPERIT_REPLY = "com.example.screenpet.OPERIT_REPLY"
         const val EXTRA_MESSAGE = "message"
     }
 
-    // 接收 Operit 回复
     private val operitReplyReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val msg = intent?.getStringExtra(EXTRA_MESSAGE) ?: return
@@ -77,9 +74,9 @@ class PetOverlayService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val nm = getSystemService(NotificationManager::class.java)
             if (nm.getNotificationChannel(channelId) == null) {
-                nm.createNotificationChannel(NotificationChannel(
-                    channelId, "桌宠运行中", NotificationManager.IMPORTANCE_MIN
-                ))
+                nm.createNotificationChannel(
+                    NotificationChannel(channelId, "桌宠运行中", NotificationManager.IMPORTANCE_MIN)
+                )
             }
         }
         val notif = NotificationCompat.Builder(this, channelId)
@@ -104,7 +101,7 @@ class PetOverlayService : Service() {
                 PetBridge(
                     onPetClick = { onPetTapped() },
                     onDragTo = { x, y -> moveWindowTo(x, y) },
-                    onDragEnd = { snapToEdge() }
+                    onDragEnd = { /* 松手后保持原位，不再吸附 */ }
                 ),
                 "AndroidBridge"
             )
@@ -121,6 +118,7 @@ class PetOverlayService : Service() {
             else
                 @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                     or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                     or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
             PixelFormat.TRANSLUCENT
@@ -133,40 +131,19 @@ class PetOverlayService : Service() {
     }
 
     private fun moveWindowTo(screenX: Float, screenY: Float) {
-    // 手指位置就是桌宠中心，减去一半宽度
-    val halfSize = dp(75)
-    params.x = (screenX - halfSize).toInt()
-    params.y = (screenY - halfSize).toInt()
-
-    // 限制不要跑出屏幕
-    params.x = params.x.coerceIn(0, screenWidth() - dp(150))
-    params.y = params.y.coerceIn(0, screenHeight() - dp(150))
-
-    try { wm.updateViewLayout(webView, params) } catch (_: Exception) {}
-}
-
-    private fun snapToEdge() {
-        val target = if (params.x + dp(75) < screenWidth() / 2) -20 else screenWidth() - dp(130)
-        val step = (target - params.x) / 8
-        if (step == 0) return
-        handler.post(object : Runnable {
-            var count = 0
-            override fun run() {
-                if (count++ >= 8) return
-                params.x += step
-                try { wm.updateViewLayout(webView, params) } catch (_: Exception) {}
-                handler.postDelayed(this, 16)
-            }
-        })
+        val halfSize = dp(75)
+        params.x = (screenX - halfSize).toInt()
+        params.y = (screenY - halfSize).toInt()
+        params.x = params.x.coerceIn(0, screenWidth() - dp(150))
+        params.y = params.y.coerceIn(0, screenHeight() - dp(150))
+        try { wm.updateViewLayout(webView, params) } catch (_: Exception) {}
     }
 
-    // ========== 核心：点击桌宠 ==========
     private fun onPetTapped() {
         if (thinking) return
         thinking = true
         js("window.petThink(true)")
 
-        // 1) 把“被戳了”这件事通过 HTTP 通知 Operit
         scope.launch(Dispatchers.IO) {
             try {
                 val url = java.net.URL("http://127.0.0.1:8094/chat")
@@ -182,7 +159,6 @@ class PetOverlayService : Service() {
             } catch (_: Exception) {}
         }
 
-        // 2) 本地回应
         scope.launch {
             val reply = DeepSeekClient.chat(
                 ScreenReaderService.latestScreenText,
