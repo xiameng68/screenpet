@@ -68,6 +68,12 @@ class PetOverlayService : Service() {
         setupWindow()
         handler.post(pollRunnable)
 
+        // 启动时自动加载上次保存的自定义图片
+        val saved = getSharedPreferences("pet", MODE_PRIVATE).getString("customImg", null)
+        if (saved != null) {
+            webView.postDelayed({ setPetImage(saved) }, 600)
+        }
+
         val filter = IntentFilter(ACTION_OPERIT_REPLY)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(operitReplyReceiver, filter, Context.RECEIVER_EXPORTED)
@@ -84,8 +90,15 @@ class PetOverlayService : Service() {
     }
 
     fun setPetImage(dataUrl: String?) {
-        if (dataUrl == null) js("window.setPetImage(null)")
-        else js("window.setPetImage(${JSONObject.quote(dataUrl)})")
+        handler.post {
+            if (dataUrl == null) {
+                webView.evaluateJavascript("window.setPetImage(null)", null)
+            } else {
+                webView.evaluateJavascript(
+                    "window.setPetImage(${JSONObject.quote(dataUrl)})", null
+                )
+            }
+        }
     }
 
     private fun startForegroundSafely() {
@@ -120,10 +133,8 @@ class PetOverlayService : Service() {
                 PetBridge(
                     onPetClick = { onPetTapped() },
                     onDragStart = { x, y ->
-                        dragStartX = x
-                        dragStartY = y
-                        winStartX = params.x
-                        winStartY = params.y
+                        dragStartX = x; dragStartY = y
+                        winStartX = params.x; winStartY = params.y
                     },
                     onDragMove = { x, y ->
                         val dx = x - dragStartX
@@ -142,7 +153,6 @@ class PetOverlayService : Service() {
     }
 
     private fun setupWindow() {
-        // 关键：窗口尺寸不再铺满全屏，只覆盖猫本身
         val size = dp(180)
         params = WindowManager.LayoutParams(
             size, size,
@@ -162,7 +172,6 @@ class PetOverlayService : Service() {
         wm.addView(webView, params)
     }
 
-    // 缩放时，窗口跟着变大小
     fun resizeWindow(scale: Float) {
         val base = dp(180)
         val newSize = (base * scale).toInt().coerceIn(dp(80), dp(600))
@@ -184,7 +193,7 @@ class PetOverlayService : Service() {
                 conn.setRequestProperty("Content-Type", "application/json")
                 conn.setRequestProperty("Authorization", "Bearer 6a7921e915264ea1bbfc3bad67ef871a")
                 conn.doOutput = true
-                val body = "{\"message\": \"用户戳了桌宠一下，屏幕内容：${ScreenReaderService.latestScreenText}\"}"
+                val body = "{\"message\": \"用户戳了桌宠一下\"}"
                 conn.outputStream.use { it.write(body.toByteArray()) }
                 conn.responseCode
                 conn.disconnect()
