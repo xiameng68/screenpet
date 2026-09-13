@@ -1,10 +1,12 @@
 package com.example.screenpet
 
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.os.Build
@@ -30,8 +32,23 @@ class PetOverlayService : Service() {
     private lateinit var params: WindowManager.LayoutParams
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val handler = Handler(Looper.getMainLooper())
-
     private var thinking = false
+
+    // ====== Operit 通信暗号 ======
+    companion object {
+        const val ACTION_PET_TAPPED = "com.ai.assistance.operit.EXTERNAL_CHAT"
+        const val ACTION_OPERIT_REPLY = "com.example.screenpet.OPERIT_REPLY"
+        const val EXTRA_MESSAGE = "message"
+    }
+
+    // 接收 Operit 回复
+    private val operitReplyReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val msg = intent?.getStringExtra(EXTRA_MESSAGE) ?: return
+            js("window.petSay(${JSONObject.quote(msg)})")
+        }
+    }
+
     private val pollRunnable = object : Runnable {
         override fun run() {
             ForegroundAppTracker.poll(this@PetOverlayService)
@@ -46,6 +63,13 @@ class PetOverlayService : Service() {
         setupWebView()
         setupWindow()
         handler.post(pollRunnable)
+
+        val filter = IntentFilter(ACTION_OPERIT_REPLY)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(operitReplyReceiver, filter, Context.RECEIVER_EXPORTED)
+        } else {
+            registerReceiver(operitReplyReceiver, filter)
+        }
     }
 
     private fun startForegroundSafely() {
@@ -131,23 +155,34 @@ class PetOverlayService : Service() {
         })
     }
 
+    // ========== 核心：点击桌宠 ==========
     private fun onPetTapped() {
         if (thinking) return
         thinking = true
         js("window.petThink(true)")
 
+        // 1) 把“被戳了”这件事通过 HTTP 通知 Operit
+        scope.launch(Dispatchers.IO) {
+            try {
+                val url = java.net.URL("http://127.0.0.1:8094/chat")
+                val conn = url.openConnection() as java.net.HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.setRequestProperty("Content-Type", "application/json")
+                conn.setRequestProperty("Authorization", "Bearer 6a7921e915264ea1bbfc3bad67ef871a")
+                conn.doOutput = true
+                val body = "{\"message\": \"用户戳了桌宠一下，屏幕内容：${ScreenReaderService.latestScreenText}\"}"
+                conn.outputStream.use { it.write(body.toByteArray()) }
+                conn.responseCode
+                conn.disconnect()
+            } catch (_: Exception) {}
+        }
+
+        // 2) 本地回应
         scope.launch {
-            val screenText = ScreenReaderService.latestScreenText
-            val scene = ForegroundAppTracker.sceneDescription()
-
-            val reply = if (!ScreenReaderService.isConnected) {
-                "还没开读屏权限，我看不见屏幕哦"
-            } else if (screenText.isBlank()) {
-                "屏幕好安静，你在发呆吗~"
-            } else {
-                DeepSeekClient.chat(screenText, scene)
-            }
-
+            val reply = DeepSeekClient.chat(
+                ScreenReaderService.latestScreenText,
+                ForegroundAppTracker.sceneDescription()
+            )
             js("window.petSay(${JSONObject.quote(reply)})")
             js("window.petThink(false)")
             thinking = false
@@ -167,6 +202,7 @@ class PetOverlayService : Service() {
     override fun onDestroy() {
         handler.removeCallbacks(pollRunnable)
         scope.cancel()
+        try { unregisterReceiver(operitReplyReceiver) } catch (_: Exception) {}
         try { wm.removeView(webView) } catch (_: Exception) {}
         super.onDestroy()
     }
