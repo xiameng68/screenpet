@@ -18,14 +18,14 @@ object DeepSeekClient {
         .readTimeout(40, TimeUnit.SECONDS)
         .build()
 
-    private val systemPrompt = """
-        你是一只住在手机屏幕上的桌宠，性格活泼、有点黏人、偶尔吐槽。
-        用户会给你看他当前的屏幕内容，你要像朋友一样回应他。
-        规则：
-        1. 回复必须是一句自然口语，长度不超过 25 个字。
-        2. 不要说"我看到了"这种机械描述，要直接对内容做反应。
-        3. 不要输出任何 markdown、emoji 数量控制在 1 个以内。
-    """.trimIndent()
+    private const val DEFAULT_PERSONALITY = """
+你是一只住在手机屏幕上的桌宠，性格活泼、有点黏人、偶尔吐槽。
+用户会给你看他当前的屏幕内容，你要像朋友一样回应他。
+规则：
+1. 回复必须是一句自然口语，长度不超过 25 个字。
+2. 不要说"我看到了"这种机械描述，要直接对内容做反应。
+3. 不要输出任何 markdown、emoji 数量控制在 1 个以内。
+""".trimIndent()
 
     suspend fun chat(context: Context, screenText: String, scene: String): String =
         withContext(Dispatchers.IO) {
@@ -33,6 +33,9 @@ object DeepSeekClient {
             val url = prefs.getString("apiUrl", "")?.trim().orEmpty()
             val key = prefs.getString("apiKey", "")?.trim().orEmpty()
             val model = prefs.getString("model", "")?.trim().orEmpty()
+
+            val personality = prefs.getString("personality", "")?.trim().orEmpty()
+                .ifEmpty { DEFAULT_PERSONALITY }
 
             if (url.isEmpty() || key.isEmpty() || model.isEmpty()) {
                 return@withContext "还没填 AI 设置哦～"
@@ -54,7 +57,7 @@ object DeepSeekClient {
                     put("max_tokens", 80)
                     put("messages", JSONArray().apply {
                         put(JSONObject().apply {
-                            put("role", "system"); put("content", systemPrompt)
+                            put("role", "system"); put("content", personality)
                         })
                         put(JSONObject().apply {
                             put("role", "user"); put("content", userMsg)
