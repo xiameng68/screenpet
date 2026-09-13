@@ -68,7 +68,6 @@ class PetOverlayService : Service() {
         setupWindow()
         handler.post(pollRunnable)
 
-        // 启动时自动加载上次保存的自定义图片
         val saved = getSharedPreferences("pet", MODE_PRIVATE).getString("customImg", null)
         if (saved != null) {
             webView.postDelayed({ setPetImage(saved) }, 600)
