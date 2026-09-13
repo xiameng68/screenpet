@@ -21,6 +21,9 @@ jobs:
       - name: 安装 Gradle 并生成启动器
         run: gradle wrapper --gradle-version 8.5
 
+      - name: 强制清理，防止用旧缓存
+        run: ./gradlew clean
+
       - name: 编译 APK
         run: ./gradlew assembleDebug --no-daemon
 
